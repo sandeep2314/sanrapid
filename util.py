@@ -6,7 +6,6 @@ import numpy as np
 """
 This util.py module contains common utility helper functions
 
-
 """
 
 
@@ -34,6 +33,7 @@ def get_location_from_vid(listsdf, vid):
 def get_unit_price(pricedf, mid, vid, period):
     """
     get_unit_price(prices_df, 674, 1, 'Q3-20') = 476.833
+    
     """
     prc =  1
     val = pricedf[(pricedf['Period']== period)       
