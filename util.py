@@ -99,13 +99,6 @@ def is_numeric(s):
         return False
 
 
-
-def get_mid_from_yield(yield_df , pid, component_name):
-    
-    themid = 0
-
-    return themid
-
 def get_product_name_from_yield(yields_df, mid):
 
     """
