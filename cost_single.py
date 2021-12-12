@@ -16,28 +16,13 @@ lists_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\lists2.xlsb', 'lists2')
 cost_details_unit_factor = 10.0
 
 
-
-
-def get_row_num_of_components(colNum, colValue):
-
-    rw = -1
-    col = yields_df.iloc[:, colNum:colNum+1]
-
-    for v in col.values:
-        #v = ['Process ID']
-        #v = ['Process Name']
-        s = str(v[0]).strip()
-        rw += 1
-        if s == colValue:
-            return rw
-    return rw
   
 # Utilities starts from row 38 and till 47
-utilities_rownum_starts =   get_row_num_of_components(1, 'Utilities (per unit of capacity)')
+utilities_rownum_starts =   u.get_row_num_of_components(yields_df ,1, 'Utilities (per unit of capacity)')
 # Raw Material Starts From row 47 till 468
-raw_material_rownum_starts = get_row_num_of_components(1, 'Feedstocks (per unit of capacity)')   
+raw_material_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Feedstocks (per unit of capacity)')   
 # By Products starts from row 469
-by_products_rownum_starts = get_row_num_of_components(1, 'Products (per unit of capacity)')   
+by_products_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Products (per unit of capacity)')   
 
 
 # 1. identify raw materials, utilities, and by products used in this pid
@@ -120,16 +105,6 @@ def get_table2(pid, vid, qtr):
 
     #mid = ut.get_mid_from_yield(yields_df, pid, 'Ethylbenzene')
     #product_name = ut.get_product_name_from_yield(yields_df,  mid)
-
-    processIds = []
-    processIds.append(pid)
-
-    locations = []
-    locations.append(vid)
-
-    qtrs = []
-    qtrs.append(qtr)
-    
     
     capasity = u.get_consumption_from_yield(yields_df, pid, 'Capacity')
     capsity_list = []
@@ -367,22 +342,29 @@ def get_table2(pid, vid, qtr):
     total_fixed_capital_with_owners_cost_list=[]
     total_fixed_capital_with_owners_cost_list.append(total_fixed_capital_with_owners_cost)
 
-
-
-
-    
-
+    processIds = []
+    processIds.append(pid)
+    vids = []
+    vids.append(vid)
+    location = u.get_location_from_vid(lists_df, vid)
+    locations = []
+    locations.append(location)
+    qtrs = []
+    qtrs.append(qtr)
     units = ['ton']
     products = []
     products.append(the_product_name)
-
     mids = []
     mids.append(themid)
+
+
+
 
     table1 = pd.DataFrame({
                     'product': products,
                     'pid': processIds,
-                    'VID': locations, 
+                    'VID': vids, 
+                    'location': locations,
                     'year': qtrs, 
                     'unit': units, 
                     'MID': mids,
@@ -441,22 +423,12 @@ vids = [1]
 periods = ['Q3-20', 'Q4-20']
 #periods = get_all_periods(prices_df)
 
-count = 0
 for pid in process_ids:
     for vid in vids:
         for period in periods:
-            count += 1
             tbl = get_table2(pid, vid, period)
             small_dfs.append(tbl)
 
 large_df = pd.concat(small_dfs, ignore_index=True)
 large_df.to_csv("C:\\Users\\HP\\Desktop\\Rapid\\costSingle_table1.csv", index=False)
 print('Done')
-
-
-
-
-
-
-
-
