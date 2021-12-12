@@ -235,10 +235,6 @@ def get_material_used_from_yield(yields_df, prices_df, pid, material_type, vid, 
 
     rm = ''
     
-    rm_unit_price_list = []
-    rm_names = []
-    rm_consumption = []
-
     rm_list = []
 
     colNum = get_column_no_yield(yields_df, pid)
