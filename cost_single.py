@@ -16,52 +16,13 @@ lists_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\lists2.xlsb', 'lists2')
 cost_details_unit_factor = 10.0
 
 
-
-def get_consumption_from_yield(yields_df, pid, material_name):
-    # 888 yield[BLI Scaled Down] 'Battery Limits, Down'
-
-    # get row num of material and get col num of pid
-    # use df.iloc[rwno, colNo] 
-   
-    rw = 1
-    df = yields_df.iloc[:, 1:2]
-    for r in df.values:
-        rw +=1
-        val = str(r[0])
-        if val.strip() == material_name:
-            break
-       
-    col = 0
-    df = yields_df.iloc[4-2, :]
-    for c in df.values:
-        col +=1
-        
-        if str(c).strip() == str(pid):
-            break
-    
-    the_data = yields_df.iloc[rw-2, col-1]
-    return the_data 
-
-def get_row_num_of_components(colNum, colValue):
-
-    rw = -1
-    col = yields_df.iloc[:, colNum:colNum+1]
-
-    for v in col.values:
-        #v = ['Process ID']
-        #v = ['Process Name']
-        s = str(v[0]).strip()
-        rw += 1
-        if s == colValue:
-            return rw
-    return rw
   
 # Utilities starts from row 38 and till 47
-utilities_rownum_starts =   get_row_num_of_components(1, 'Utilities (per unit of capacity)')
+utilities_rownum_starts =   u.get_row_num_of_components(yields_df ,1, 'Utilities (per unit of capacity)')
 # Raw Material Starts From row 47 till 468
-raw_material_rownum_starts = get_row_num_of_components(1, 'Feedstocks (per unit of capacity)')   
+raw_material_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Feedstocks (per unit of capacity)')   
 # By Products starts from row 469
-by_products_rownum_starts = get_row_num_of_components(1, 'Products (per unit of capacity)')   
+by_products_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Products (per unit of capacity)')   
 
 
 # 1. identify raw materials, utilities, and by products used in this pid
@@ -144,24 +105,14 @@ def get_table2(pid, vid, qtr):
 
     #mid = ut.get_mid_from_yield(yields_df, pid, 'Ethylbenzene')
     #product_name = ut.get_product_name_from_yield(yields_df,  mid)
-
-    processIds = []
-    processIds.append(pid)
-
-    locations = []
-    locations.append(vid)
-
-    qtrs = []
-    qtrs.append(qtr)
     
-    
-    capasity = get_consumption_from_yield(yields_df, pid, 'Capacity')
+    capasity = u.get_consumption_from_yield(yields_df, pid, 'Capacity')
     capsity_list = []
     capsity_list.append(capasity)
 
     #Yield[BLI]/Yield[Capital Index Basis]*Prices[0]*Prices[10]
-    bli_yield = get_consumption_from_yield(yields_df, pid, 'Battery Limits Investment')
-    capital_index = get_consumption_from_yield(yields_df, pid, 'Capital Index Basis')
+    bli_yield = u.get_consumption_from_yield(yields_df, pid, 'Battery Limits Investment')
+    capital_index = u.get_consumption_from_yield(yields_df, pid, 'Capital Index Basis')
     prices_0 = u.get_unit_price(prices_df, 0, vid, qtr)
     prices_10 = u.get_unit_price(prices_df, 10, vid, qtr)
 
@@ -171,7 +122,7 @@ def get_table2(pid, vid, qtr):
 
     # Total Fixed Capital
     # Yield[TFC]/Yield[Capital Index Basis]*Prices[0]*Prices[10]
-    yield_tfc = get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital')
+    yield_tfc = u.get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital')
     tfc =  yield_tfc/capital_index * prices_0 * prices_10   
     total_fixed_capital_list = [tfc]
 
@@ -220,14 +171,14 @@ def get_table2(pid, vid, qtr):
     # (costplant[BLI]/Cost_Summary[capacity])*Yield[Maintenance Materials]*1000
     # yield_mm = 0.024
     #get_consumption_from_yield(yields_df, pid, material_name)
-    yield_mm = get_consumption_from_yield(yields_df, pid, 'Maintenance Materials')
+    yield_mm = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Materials')
     mm = (bli/capasity)  * yield_mm * 1000
     maintenance_materials_list = []
     maintenance_materials_list.append(mm)
 
     # Operating Labor
     #(Yield[Operators]* 0.876 * Prices[9]) / Capacity] *( 10/mydivisor)
-    yield_operators = get_consumption_from_yield(yields_df, pid, 'Operators')
+    yield_operators = u.get_consumption_from_yield(yields_df, pid, 'Operators')
     prices_9 = u.get_unit_price(prices_df, 9, vid, qtr)
     mydivisor = 1000
     ol = ((yield_operators * 0.876 * prices_9)/capasity) * (10 / 1)
@@ -243,7 +194,7 @@ def get_table2(pid, vid, qtr):
 
     #Maintenanace Labor
     # (BLI/Cost_single[Capacity])*Yield[Maintenance Labor]*10
-    yield_ml = get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
+    yield_ml = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
     mt_labor = (bli / capasity) * yield_ml * 1000
     mt_labor_list = []
     mt_labor_list.append(mt_labor)
@@ -302,7 +253,7 @@ def get_table2(pid, vid, qtr):
     # todo
 
     cost_single_price = u.get_unit_price(prices_df, themid, vid, qtr)
-    yield_gsa = get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
+    yield_gsa = u.get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
 
     gsa =  cost_single_price * yield_gsa
     gsa_list = []
@@ -386,27 +337,34 @@ def get_table2(pid, vid, qtr):
 
     # Total Fixed Capital (w/ Owners Costs)
     # TFC * (1+ Yield[Owners Costs])
-    yield_owners_cost = get_consumption_from_yield(yields_df, pid, 'Owners Costs')
+    yield_owners_cost = u.get_consumption_from_yield(yields_df, pid, 'Owners Costs')
     total_fixed_capital_with_owners_cost = tfc * (1 + yield_owners_cost)
     total_fixed_capital_with_owners_cost_list=[]
     total_fixed_capital_with_owners_cost_list.append(total_fixed_capital_with_owners_cost)
 
-
-
-
-    
-
+    processIds = []
+    processIds.append(pid)
+    vids = []
+    vids.append(vid)
+    location = u.get_location_from_vid(lists_df, vid)
+    locations = []
+    locations.append(location)
+    qtrs = []
+    qtrs.append(qtr)
     units = ['ton']
     products = []
     products.append(the_product_name)
-
     mids = []
     mids.append(themid)
+
+
+
 
     table1 = pd.DataFrame({
                     'product': products,
                     'pid': processIds,
-                    'VID': locations, 
+                    'VID': vids, 
+                    'location': locations,
                     'year': qtrs, 
                     'unit': units, 
                     'MID': mids,
@@ -465,22 +423,12 @@ vids = [1]
 periods = ['Q3-20', 'Q4-20']
 #periods = get_all_periods(prices_df)
 
-count = 0
 for pid in process_ids:
     for vid in vids:
         for period in periods:
-            count += 1
             tbl = get_table2(pid, vid, period)
             small_dfs.append(tbl)
 
 large_df = pd.concat(small_dfs, ignore_index=True)
 large_df.to_csv("C:\\Users\\HP\\Desktop\\Rapid\\costSingle_table1.csv", index=False)
 print('Done')
-
-
-
-
-
-
-
-

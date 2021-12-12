@@ -68,8 +68,6 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     
     """
 
-    
-
     section = ['Capacity'
                 , 'Investment (US$ Million)' 
                 , 'Investment (US$ Million)', 'Investment (US$ Million)'
@@ -510,7 +508,8 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     products = [u.get_product_name_from_yield(yields_df ,mid) for k in section]
     processIds = [pid for k in section]
-    locations = [vid for k in section]
+    #locations = [ vid for k in section]
+    locations = [ u.get_location_from_vid(lists_df, vid) for k in section]
     qtrs = [qtr for k in section]
     basis = ['IHSM' for k in section]
     
