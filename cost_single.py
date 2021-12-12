@@ -17,30 +17,6 @@ cost_details_unit_factor = 10.0
 
 
 
-def get_consumption_from_yield(yields_df, pid, material_name):
-    # 888 yield[BLI Scaled Down] 'Battery Limits, Down'
-
-    # get row num of material and get col num of pid
-    # use df.iloc[rwno, colNo] 
-   
-    rw = 1
-    df = yields_df.iloc[:, 1:2]
-    for r in df.values:
-        rw +=1
-        val = str(r[0])
-        if val.strip() == material_name:
-            break
-       
-    col = 0
-    df = yields_df.iloc[4-2, :]
-    for c in df.values:
-        col +=1
-        
-        if str(c).strip() == str(pid):
-            break
-    
-    the_data = yields_df.iloc[rw-2, col-1]
-    return the_data 
 
 def get_row_num_of_components(colNum, colValue):
 
@@ -155,13 +131,13 @@ def get_table2(pid, vid, qtr):
     qtrs.append(qtr)
     
     
-    capasity = get_consumption_from_yield(yields_df, pid, 'Capacity')
+    capasity = u.get_consumption_from_yield(yields_df, pid, 'Capacity')
     capsity_list = []
     capsity_list.append(capasity)
 
     #Yield[BLI]/Yield[Capital Index Basis]*Prices[0]*Prices[10]
-    bli_yield = get_consumption_from_yield(yields_df, pid, 'Battery Limits Investment')
-    capital_index = get_consumption_from_yield(yields_df, pid, 'Capital Index Basis')
+    bli_yield = u.get_consumption_from_yield(yields_df, pid, 'Battery Limits Investment')
+    capital_index = u.get_consumption_from_yield(yields_df, pid, 'Capital Index Basis')
     prices_0 = u.get_unit_price(prices_df, 0, vid, qtr)
     prices_10 = u.get_unit_price(prices_df, 10, vid, qtr)
 
@@ -171,7 +147,7 @@ def get_table2(pid, vid, qtr):
 
     # Total Fixed Capital
     # Yield[TFC]/Yield[Capital Index Basis]*Prices[0]*Prices[10]
-    yield_tfc = get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital')
+    yield_tfc = u.get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital')
     tfc =  yield_tfc/capital_index * prices_0 * prices_10   
     total_fixed_capital_list = [tfc]
 
@@ -220,14 +196,14 @@ def get_table2(pid, vid, qtr):
     # (costplant[BLI]/Cost_Summary[capacity])*Yield[Maintenance Materials]*1000
     # yield_mm = 0.024
     #get_consumption_from_yield(yields_df, pid, material_name)
-    yield_mm = get_consumption_from_yield(yields_df, pid, 'Maintenance Materials')
+    yield_mm = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Materials')
     mm = (bli/capasity)  * yield_mm * 1000
     maintenance_materials_list = []
     maintenance_materials_list.append(mm)
 
     # Operating Labor
     #(Yield[Operators]* 0.876 * Prices[9]) / Capacity] *( 10/mydivisor)
-    yield_operators = get_consumption_from_yield(yields_df, pid, 'Operators')
+    yield_operators = u.get_consumption_from_yield(yields_df, pid, 'Operators')
     prices_9 = u.get_unit_price(prices_df, 9, vid, qtr)
     mydivisor = 1000
     ol = ((yield_operators * 0.876 * prices_9)/capasity) * (10 / 1)
@@ -243,7 +219,7 @@ def get_table2(pid, vid, qtr):
 
     #Maintenanace Labor
     # (BLI/Cost_single[Capacity])*Yield[Maintenance Labor]*10
-    yield_ml = get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
+    yield_ml = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
     mt_labor = (bli / capasity) * yield_ml * 1000
     mt_labor_list = []
     mt_labor_list.append(mt_labor)
@@ -302,7 +278,7 @@ def get_table2(pid, vid, qtr):
     # todo
 
     cost_single_price = u.get_unit_price(prices_df, themid, vid, qtr)
-    yield_gsa = get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
+    yield_gsa = u.get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
 
     gsa =  cost_single_price * yield_gsa
     gsa_list = []
@@ -386,7 +362,7 @@ def get_table2(pid, vid, qtr):
 
     # Total Fixed Capital (w/ Owners Costs)
     # TFC * (1+ Yield[Owners Costs])
-    yield_owners_cost = get_consumption_from_yield(yields_df, pid, 'Owners Costs')
+    yield_owners_cost = u.get_consumption_from_yield(yields_df, pid, 'Owners Costs')
     total_fixed_capital_with_owners_cost = tfc * (1 + yield_owners_cost)
     total_fixed_capital_with_owners_cost_list=[]
     total_fixed_capital_with_owners_cost_list.append(total_fixed_capital_with_owners_cost)
