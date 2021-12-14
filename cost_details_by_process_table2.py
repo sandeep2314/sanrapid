@@ -4,7 +4,6 @@ import numpy as np
 from pandas.core.arrays.string_ import StringDtype
 from pandas.core.indexes.base import Index
 
-from  util import is_numeric
 import util as u
 
 
@@ -13,35 +12,7 @@ yields_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\RAPID.xlsb', 'Yields')
 prices_df= pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\RAPID.xlsb', 'Prices')
 lists_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\lists2.xlsb', 'lists2')
 
-
 cost_details_unit_factor = 10.0
-
-
-def get_value_from_yield(pid, material_name):
-    # 888 yield[BLI Scaled Down] 'Battery Limits, Down'
-
-    # get row num of material and get col num of pid
-    # use df.iloc[rwno, colNo] 
-   
-    rw = 1
-    df = yields_df.iloc[:, 1:2]
-    for r in df.values:
-        rw +=1
-        val = str(r[0])
-        if val.strip() == material_name:
-            break
-    
-    col = 0
-
-    df = yields_df.iloc[4-2, :]
-    for c in df.values:
-        col +=1
-        
-        if str(c).strip() == str(pid):
-            break
-    
-    the_data = yields_df.iloc[rw-2, col-1]
-    return the_data 
 
 def get_data_from_cost_single(sction, pid, mid, vid, qtr):
     """
@@ -60,13 +31,15 @@ def get_data_from_cost_single(sction, pid, mid, vid, qtr):
 
 #print(get_data_from_cost_single('Capacity', 237, 674, 1, 'Q3-20'))
 
-def get_table2(cmpnts, pid, mid, vid, qtr):
+def get_table2(pid, vid, qtr):
 
     """
     this is main function produces data for Cost Details By Process 
     for Overall Cost Structure
     
     """
+
+    
 
     section = ['Capacity'
                 , 'Investment (US$ Million)' 
@@ -103,11 +76,13 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
         , 'Cash Margin'
         ]
     
+    mid = u.get_mid_from_yield_pid(yields_df, pid)
+
     # capsity = get_data_from_cost_single(cmpnts[0], pid, mid, vid, qtr)
     capsity = get_data_from_cost_single('Capacity', pid, mid, vid, qtr)
     capsity_full = -1
     
-    if is_numeric(capsity):
+    if u.is_numeric(capsity):
         capsity_full = np.float32(capsity)
     
     capsity_half = capsity_full * 0.5
@@ -123,10 +98,11 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     # 888 yield[BLI Scaled Down] = 0.620 'Battery Limits, Down'
     #bli_scaled_down = 0.620
-    bli_scaled_down = get_value_from_yield(pid, 'Battery Limits, Down')
-    bli_scaled_up = get_value_from_yield(pid, 'Battery Limits, Up')
+    #bli_scaled_down = get_value_from_yield(pid, 'Battery Limits, Down')
+    bli_scaled_down = u.get_consumption_from_yield(yields_df, pid, 'Battery Limits, Down')
+    bli_scaled_up = u.get_consumption_from_yield(yields_df, pid, 'Battery Limits, Up')
 
-    if is_numeric(battery_limits):
+    if u.is_numeric(battery_limits):
         battery_limits_full = np.float32(battery_limits)
     
     battery_limits_half = (battery_limits_full*(pow((capsity_half/capsity_full), bli_scaled_down)))
@@ -134,7 +110,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
    
     offsites_str = get_data_from_cost_single('Offsites Investment', pid, mid, vid, qtr)
-    if is_numeric(offsites_str):
+    if u.is_numeric(offsites_str):
         offsites_full = np.float32(offsites_str)
 
     #Investment 
@@ -145,8 +121,8 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     
     investment_full = (battery_limits_full + offsites_full)
     #  87.0 * pow(260.8156128/521.6312256, .570)
-    tfc_down = get_value_from_yield(pid, 'Total Fixed Capital, Down')
-    tfc_up = get_value_from_yield(pid, 'Total Fixed Capital, Up')
+    tfc_down = u.get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital, Down')
+    tfc_up = u.get_consumption_from_yield(yields_df, pid, 'Total Fixed Capital, Up')
     investment_half = (investment_full) * (pow((capsity_half/capsity_full), tfc_down))
     investment_double = (investment_full)* (pow((capsity_double/capsity_full), tfc_up))
     
@@ -204,7 +180,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     # if capacity = 0 then 0 else 
     # ((Battery Limits*yields[Maintenance Materials]) / (Capacity))  *  Cost Details[Unit Factor] & Cost Summary[Maintenance Materials]
     #yields_maintenance_materials = 0.024
-    yields_maintenance_materials = get_value_from_yield(pid, 'Maintenance Materials')
+    yields_maintenance_materials = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Materials')
     #cost_details_unit_factor_str = get_data_from_cost_single(['Unit Factor'], pid, mid, vid, qtr)
     cost_details_unit_factor_str = 10.0
     
@@ -217,7 +193,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     cost_summary_maintenance_materials_str = get_data_from_cost_single(cmp[0], pid, mid, vid, qtr)
   
     cost_summary_maintenance_materials = -1    
-    if is_numeric(cost_summary_maintenance_materials_str):
+    if u.is_numeric(cost_summary_maintenance_materials_str):
         cost_summary_maintenance_materials = np.float32(cost_summary_maintenance_materials_str)
 
     #battery_limits_full = battery_limits
@@ -246,12 +222,12 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     operating_labor_str = get_data_from_cost_single(cmp[0], pid, mid, vid, qtr)
     operating_labor = -1.0
-    if is_numeric(operating_labor_str):
+    if u.is_numeric(operating_labor_str):
         operating_labor = np.float32(operating_labor_str)
 
     cost_summary_operating_supplies_str = get_data_from_cost_single(cmp[1], pid, mid, vid, qtr)
     cost_summary_operating_supplies = -1.0
-    if is_numeric(cost_summary_operating_supplies_str):
+    if u.is_numeric(cost_summary_operating_supplies_str):
         cost_summary_operating_supplies = np.float32(cost_summary_operating_supplies_str)
     
     #operating_supplies_full = operating_labor * cost_summary_operating_supplies
@@ -274,11 +250,11 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     # ((Battery Limits * Cost Details[ML_PCT])/Capacity) * Cost Details[Units Factor]
     # to get Cost Details[ML_PCT] = 0.02, 
     #cost_details_ml_pct = 0.016
-    cost_details_ml_pct = get_value_from_yield(pid, 'Maintenance Labor')
+    cost_details_ml_pct = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
     
     cost_summary_maintainence_labor_str = get_data_from_cost_single('Maintenance Labor', pid, mid, vid, qtr)
     cost_summary_maintainence_labor = -1.0
-    if is_numeric(cost_summary_maintainence_labor_str):
+    if u.is_numeric(cost_summary_maintainence_labor_str):
         cost_summary_maintainence_labor = np.float32(cost_summary_maintainence_labor_str)
     
     maintenance_labor_full = cost_summary_maintainence_labor
@@ -288,7 +264,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     #777 'Control Laboratory'
     control_laboratory_str = get_data_from_cost_single('Control Laboratory', pid, mid, vid, qtr)
     control_laboratory = -1.0
-    if is_numeric(control_laboratory_str):
+    if u.is_numeric(control_laboratory_str):
         control_laboratory = np.float32(control_laboratory_str)
     
     control_laboratory_full = control_laboratory
@@ -305,7 +281,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     plant_overhead_str = get_data_from_cost_single('Plant Overhead', pid, mid, vid, qtr)
     plant_overhead = -1.0
-    if is_numeric(plant_overhead_str):
+    if u.is_numeric(plant_overhead_str):
         plant_overhead = np.float32(plant_overhead_str)
     
     plant_overhead_full = plant_overhead
@@ -329,7 +305,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     cost_details_ti_pct = u.get_pct_from_lists(lists_df, vid, 'cd_tipct')
     taxes_and_insurance_str = get_data_from_cost_single('Taxes And Insurance', pid, mid, vid, qtr)
     taxes_and_insurance = -1.0
-    if is_numeric(taxes_and_insurance_str):
+    if u.is_numeric(taxes_and_insurance_str):
         taxes_and_insurance = np.float32(taxes_and_insurance_str)
     
     taxes_and_insurance_full = taxes_and_insurance
@@ -354,7 +330,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
     # Deprication + Plant Cash Cost -  from costDetailsByProcess Tab
     plant_gate_cost_str = get_data_from_cost_single('Plant Gate Cost', pid, mid, vid, qtr)
     plant_gate_cost = -1.0
-    if is_numeric(taxes_and_insurance_str):
+    if u.is_numeric(taxes_and_insurance_str):
         plant_gate_cost = np.float32(plant_gate_cost_str)
       
     plant_gate_cost_full = plant_gate_cost
@@ -376,9 +352,9 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     g_a_sales_res_str = get_data_from_cost_single('G&A, Sales, Research', pid, mid, vid, qtr)
     g_a_sales_res = -1.0
-    cost_details_gsa_pct = get_value_from_yield(pid, 'G+A, Sales, Res.')
+    cost_details_gsa_pct = u.get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
     
-    if is_numeric(g_a_sales_res_str):
+    if u.is_numeric(g_a_sales_res_str):
         g_a_sales_res = np.float32(g_a_sales_res_str)
     
     m1_half = cost_details_gsa_pct/(100 - cost_details_gsa_pct)
@@ -418,7 +394,7 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     price_str = get_data_from_cost_single('Price', pid, mid, vid, qtr)
     price = -1.0
-    if is_numeric(price_str):
+    if u.is_numeric(price_str):
         price = np.float32(price_str)
 
     cash_margin_full = price - plant_cash_costs_full
@@ -508,8 +484,9 @@ def get_table2(cmpnts, pid, mid, vid, qtr):
 
     products = [u.get_product_name_from_yield(yields_df ,mid) for k in section]
     processIds = [pid for k in section]
-    #locations = [ vid for k in section]
-    locations = [ u.get_location_from_vid(lists_df, vid) for k in section]
+    #locations = [vid for k in section]
+    locations = [u.get_location_from_vid(lists_df, vid) for k in section]
+     
     qtrs = [qtr for k in section]
     basis = ['IHSM' for k in section]
     
@@ -556,7 +533,32 @@ components_in_costdetails = [
                             , 'Cash Margin'
                             ]
 
-large_df = get_table2(components_in_costdetails, 237, 674, 1, 'Q3-20')
+
+
+pids = u.get_all_processids(yields_df)
+pids2 = [237]
+# for test only take 6 pids replace pids2 with pids in production
+nos = 0
+for p in pids:
+    nos +=1
+    pids2.append(p)
+    if nos > 3:
+        break
+
+#vids = u.get_all_vids(prices_df)
+vids = [1,2, 3]
+
+periods = u.get_all_periods(prices_df)
+periods = ['Q3-20']
+
+small_dfs = []
+for pid in pids2: # replace pids2 with pids in production
+    for vid in vids:
+        for period in periods:
+            tbl = get_table2(pid, vid, period)
+            small_dfs.append(tbl)
+
+large_df = pd.concat(small_dfs, ignore_index=True)
 large_df.to_csv("C:\\Users\\HP\\Desktop\\Rapid\\costDetails_table2.csv", index=False)
 print('Done')
 
