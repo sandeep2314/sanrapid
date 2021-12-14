@@ -11,8 +11,6 @@ import pandas as pd
 import numpy as np
 
 import util as u
-from  util import is_numeric,  get_column_no_yield, get_all_vids, get_all_periods,get_all_processids
-
 
 
 yields_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\RAPID.xlsb', 'Yields')
@@ -29,9 +27,13 @@ raw_material_rownum_starts = u.get_row_num_of_components(yields_df, 1, 'Feedstoc
 by_products_rownum_starts = u.get_row_num_of_components(yields_df, 1, 'Products (per unit of capacity)')   
 
 
-def get_table1(col, vid, qtr):
+def get_table1(pid, vid, qtr):
+
+    r = u.get_column_no_yield(yields_df, pid)    
+    col = yields_df.iloc[:, r-1:r]
+
     rw = 0
-    prod_name = ''
+    
     section = []
     components = []
     unit_cost = []
@@ -67,13 +69,8 @@ def get_table1(col, vid, qtr):
         
         rw+=1
         val = str(v[0])
-        
-        if is_numeric(val) and np.float32(val) == 1.0 :
-            prod_name = yields_df.iloc[rw-1,1] 
-        if rw == 3 and is_numeric(val):
-            process_id = val
             
-        if  is_numeric(val) and (np.float32(val) > 0 or np.float32(val) < 0 ):
+        if  u.is_numeric(val) and (np.float32(val) > 0 or np.float32(val) < 0 ):
             
             # raw material
             #if rw > 48 and rw < 468: 
@@ -125,13 +122,12 @@ def get_table1(col, vid, qtr):
     units_m1 = ['US$/'+k for k in units_m2]
     unit_consumption = rm_consumption + by_product_consumption + utl_consumption
     net_cost = [a*b for a,b in zip(unit_cost,unit_consumption)]
-    processIds = [process_id for k in section]
+    processIds = [pid for k in section]
     vids = [vid for k in section]
     locations = [u.get_location_from_vid(lists_df, vid) for k in section]
     qtrs = [qtr for k in section]
     basis = ['IHSM' for k in section]
-    products = [prod_name for k in section]
-
+    products = [u.get_product_name_from_pid(yields_df, pid) for k in section]
 
     table1 = pd.DataFrame({
                     'PRODUCT': products,
@@ -153,35 +149,28 @@ def get_table1(col, vid, qtr):
     return table1
 
 
+pids = u.get_all_processids(yields_df)
+pids2 = [237]
+# for test only take 6 pids replace pids2 with pids in production
+nos = 0
+for p in pids:
+    nos +=1
+    pids2.append(p)
+    if nos > 3:
+        break
 
-#all  process_ids = yields_df.iloc[4-2,4:]
-process_ids = yields_df.iloc[4-2,158:170]
-cols_list = []
-for pid in list(process_ids):
-    r = get_column_no_yield(yields_df,pid)    
-    cols_list.append(yields_df.iloc[:, r:r+1])
-    the_count = 1
-
-
-vids = [1]
-# row numbers for all periods
-vids = get_all_vids(unitprice_df)
-
-#periods  = [8]
-periods = get_all_periods(unitprice_df)
+vids = u.get_all_vids(unitprice_df)
+periods = u.get_all_periods(unitprice_df)
 
 small_dfs = []
 
-for col3 in cols_list:
+for the_pid in pids2:
     for the_vid in vids:
         for the_qtr in periods:
-            tbl = get_table1(col3, the_vid, the_qtr)
+            tbl = get_table1(the_pid, the_vid, the_qtr)
             small_dfs.append(tbl)
 
 large_df = pd.concat(small_dfs, ignore_index=True)
 large_df.to_csv("C:\\Users\\HP\\Desktop\\Rapid\\costDetails_table1.csv", index=False)
 print('Done')
-
-
-
 
