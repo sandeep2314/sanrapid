@@ -6,15 +6,12 @@ from pandas.core.arrays.string_ import StringDtype
 from pandas.core.indexes.base import Index
 
 import util as u
-from  util import is_numeric,  get_column_no_yield, get_all_processids, get_all_vids, get_all_processids, get_pct_from_lists
-
 
 yields_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\RAPID.xlsb', 'Yields')
 prices_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\RAPID.xlsb', 'Prices')
 lists_df = pd.read_excel('C:\\Users\\HP\\Desktop\\Rapid\\lists2.xlsb', 'lists2')
 
 cost_details_unit_factor = 10.0
-
 
   
 # Utilities starts from row 38 and till 47
@@ -25,86 +22,15 @@ raw_material_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Feedstoc
 by_products_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Products (per unit of capacity)')   
 
 
-# 1. identify raw materials, utilities, and by products used in this pid
-
-themid = -1
-the_product_name = ''
-
-
-def get_material_used_from_yield(yields_df, prices_df, pid, material_type, vid, qtr):
-
-    rm = ''
-    
-    rm_unit_price_list = []
-    rm_names = []
-    rm_consumption = []
-
-    rm_list = []
-
-    colNum = get_column_no_yield(yields_df, pid)
-    #print('colNum ', colNum)
-
-    col = yields_df.iloc[:, colNum-1:colNum]
-    rw = 0
-    for v in col.values:
-
-        rw+=1
-        val = str(v[0])
-
-        # the_product_name
-        if is_numeric(val) and np.float32(val) == 1.0 :
-            global the_product_name 
-            the_product_name = yields_df.iloc[rw-1,1]
-            global themid 
-            themid = yields_df.iloc[rw-1,0] 
-
-        # raw material   
-        if is_numeric(val) and np.float32(val) != 1 and  np.float32(val) > 0  and material_type == 'raw material' and rw > raw_material_rownum_starts and rw < by_products_rownum_starts: 
-            
-            rm_name = yields_df.iloc[rw-1,1]
-            compid = yields_df.iloc[rw-1,0]
-            unit_price = u.get_unit_price(prices_df, compid, vid, qtr)
-            
-            consumption = v[0]
-            rm = v[0] * unit_price
-            rm_list.append(rm)
-
-            # By Products
-            #rw > by_products_rownum_starts and np.float32(val) != 1 
-        if (is_numeric(val) and np.float32(val) != 1 and (np.float32(val) > 0 or np.float32(val) < 0) ) and material_type == 'by product' and rw > by_products_rownum_starts:
-                
-            by_product_name = yields_df.iloc[rw-1,1]
-            compid = yields_df.iloc[rw-1,0]
-            unit_price = u.get_unit_price(prices_df, compid, vid, qtr)
-            consumption = v[0]
-            rm = consumption * unit_price
-            rm_list.append(rm)
-    
-        # By Utilities
-        # rw > utilities_rownum_starts and rw < raw_material_rownum_starts:                
-        if (is_numeric(val) and np.float32(val) != 1 and (np.float32(val) > 0 or np.float32(val) < 0) ) and material_type == 'utilities' and rw > utilities_rownum_starts and rw < raw_material_rownum_starts:
-                
-            by_product_name = yields_df.iloc[rw-1,1]
-            compid = yields_df.iloc[rw-1,0]
-            unit_price = u.get_unit_price(prices_df, compid, vid, qtr)
-            consumption = v[0]
-            rm = consumption * unit_price
-            rm_list.append(rm)
-    
-    return sum(rm_list)
-
-
 def get_table2(pid, vid, qtr):
 
     """
     this is main function produces data for Cost Detail
     given a processid - pid  237, location - vid 1, period - qtr Q3-20
     """
-    
-    #get_product_name_from_yield(yields_df, mid)
 
-    #mid = ut.get_mid_from_yield(yields_df, pid, 'Ethylbenzene')
-    #product_name = ut.get_product_name_from_yield(yields_df,  mid)
+    themid = u.get_mid_from_yield_pid(yields_df, pid)
+    the_product_name = u.get_product_name_from_pid(yields_df, pid)
     
     capasity = u.get_consumption_from_yield(yields_df, pid, 'Capacity')
     capsity_list = []
@@ -132,30 +58,20 @@ def get_table2(pid, vid, qtr):
     off_site = bli - tfc
     off_site_list = []
     off_site_list.append(abs(off_site))
-    
-    # Raw Material
-    # MMULT(Yield[Feedstocks],Prices), you map them by using their MID's
-    # 1. identify raw material used in this pid
-    # 2. get their respective mids
-    # 3. get unit price from mid
-    # 4. get consumption from yied
-    # 5. cost = consumption * price for each raw material
-    # 6. Sum of all raw material costs
-
 
     raw_material_list = []
     #sum_m = get_material_used_from_yield(pid, 'raw material')
-    sum_m = get_material_used_from_yield(yields_df, prices_df, pid, 'raw material', vid, qtr)
+    sum_m = u.get_material_used_from_yield(yields_df, prices_df, pid, 'raw material', vid, qtr)
     raw_material_list.append(sum_m)
 
     by_product__credit_list = []
     #sum_p = get_material_used_from_yield(pid, 'by product') * -1.0
-    sum_p = get_material_used_from_yield(yields_df, prices_df, pid, 'by product', vid, qtr)* -1.0
+    sum_p = u.get_material_used_from_yield(yields_df, prices_df, pid, 'by product', vid, qtr)* -1.0
     by_product__credit_list.append(sum_p)
 
     utilities_list = []
     #sum_u = get_material_used_from_yield(pid, 'utilities')
-    sum_u = get_material_used_from_yield(yields_df, prices_df, pid, 'utilities', vid, qtr)
+    sum_u = u.get_material_used_from_yield(yields_df, prices_df, pid, 'utilities', vid, qtr)
     utilities_list.append(sum_u)
 
     # variable costs
@@ -187,7 +103,7 @@ def get_table2(pid, vid, qtr):
 
     # Operating Supplies
     # Lists[Country][OS]*Operating Labor
-    list_country_os = get_pct_from_lists(lists_df, vid, 'cd_ospct')
+    list_country_os = u.get_pct_from_lists(lists_df, vid, 'cd_ospct')
     ops = list_country_os * ol
     operating_supplies_list = []
     operating_supplies_list.append(ops)
@@ -201,7 +117,7 @@ def get_table2(pid, vid, qtr):
 
     # Control Laboratary
     # Operating Labor * Lists[Country][CL]
-    lists_country_cl = get_pct_from_lists(lists_df, vid, 'cd_clpct')
+    lists_country_cl = u.get_pct_from_lists(lists_df, vid, 'cd_clpct')
     control_laboratary = ol  * lists_country_cl
     control_laboratary_list = []
     control_laboratary_list.append(control_laboratary)
@@ -214,14 +130,14 @@ def get_table2(pid, vid, qtr):
 
     #Plant Overhead
     # (Operating Labor + Maitenance Labor + Control Laboratory) * Lists[Country][OH]
-    lists_country_oh = get_pct_from_lists(lists_df, vid, 'cd_ohpct')
+    lists_country_oh = u.get_pct_from_lists(lists_df, vid, 'cd_ohpct')
     plant_overhead = (ol + mt_labor + control_laboratary) * lists_country_oh
     plant_overhead_list = []
     plant_overhead_list.append(plant_overhead)
 
     # Taxes and Insurance 
     # (costsingle[TFC]/yieldplant[Capacity])*Lists[Country][TI]*(1000/mydivisor)
-    lists_country__ti = get_pct_from_lists(lists_df, vid, 'cd_tipct')
+    lists_country__ti = u.get_pct_from_lists(lists_df, vid, 'cd_tipct')
     taxes_and_insurance = (tfc/capasity)  * lists_country__ti * (1000)
     taxes_and_insurance_list = []
     taxes_and_insurance_list.append(taxes_and_insurance)
@@ -250,7 +166,8 @@ def get_table2(pid, vid, qtr):
     # G&A, Sales, Research
     # costsingle[Price]*yield(G&A, Sales, Research)
     # get price for productid  ethyline = 674 from price tab
-    # todo
+    # sandeep
+
 
     cost_single_price = u.get_unit_price(prices_df, themid, vid, qtr)
     yield_gsa = u.get_consumption_from_yield(yields_df, pid, 'G+A, Sales, Res.')
@@ -357,9 +274,6 @@ def get_table2(pid, vid, qtr):
     mids = []
     mids.append(themid)
 
-
-
-
     table1 = pd.DataFrame({
                     'product': products,
                     'pid': processIds,
@@ -408,22 +322,24 @@ def get_table2(pid, vid, qtr):
     return table1
 
 
+pids = u.get_all_processids(yields_df)
+pids2 = [237]
+# for test only take 4 pids replace pids2 with pids in production
+nos = 0
+for p in pids:
+    nos +=1
+    pids2.append(p)
+    if nos > 3:
+        break
+
+#vids = [1]
+vids = u.get_all_vids(prices_df)
+#periods = ['Q3-20', 'Q4-20']
+periods = u.get_all_periods(prices_df)
+
 small_dfs = []
 
-process_ids = [237, 238, 1797]
-# all processes from yield
-#process_ids = yields_df.iloc[4-2,4:]
-process_ids2 = get_all_processids(yields_df)
-#print(list(process_ids2))
-
-vids = [1]
-# region in prices get all the rows of 3 rd column
-#vids = get_all_vids(prices_df)
-
-periods = ['Q3-20', 'Q4-20']
-#periods = get_all_periods(prices_df)
-
-for pid in process_ids:
+for pid in pids2: # replace pids2 with pids in production
     for vid in vids:
         for period in periods:
             tbl = get_table2(pid, vid, period)
