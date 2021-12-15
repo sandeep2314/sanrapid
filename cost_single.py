@@ -25,7 +25,7 @@ by_products_rownum_starts = u.get_row_num_of_components(yields_df ,1, 'Products 
 def get_table2(pid, vid, qtr):
 
     """
-    this is main function produces data for Cost Detail
+    this is main function, produces data for Cost Single
     given a processid - pid  237, location - vid 1, period - qtr Q3-20
     """
 
