@@ -506,38 +506,9 @@ def get_table2(pid, vid, qtr):
 
     return table1
 
-
-
-components_in_costdetails = [
-                            'Capacity', 'Battery Limits Investment'
-                            , 'Offsites Investment'
-                            , 'Investment (US$ Million)'
-                            , 'Raw Materials'
-                            , 'By Product Credits'
-                            , 'Utilities'
-                            , 'Carbon'
-                            , 'Variable Costs'
-                            , 'Maintenance Materials'
-                            , 'Operating Supplies'
-                            , 'Operating Labor'
-                            , 'Maintenance Labor'
-                            , 'Control Laboratory'
-                            , 'Total Direct Costs'
-                            , 'Plant Overhead'
-                            , 'Taxes And Insurance'
-                            , 'Plant Cash Costs'
-                            , 'Depreciation'
-                            , 'Plant Gate Cost'
-                            , 'G + A, Sales, Res.'
-                            , 'Production Costs'
-                            , 'Cash Margin'
-                            ]
-
-
-
 pids = u.get_all_processids(yields_df)
 pids2 = [237]
-# for test only take 6 pids replace pids2 with pids in production
+# for test only take 4 pids replace pids2 with pids in production
 nos = 0
 for p in pids:
     nos +=1
