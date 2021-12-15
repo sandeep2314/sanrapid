@@ -137,21 +137,16 @@ def get_table2(pid, vid, qtr):
     # Carbon = 0
 
     # RAW MATERIAL, Utilities, By Product Credit
-    #get_sum_section(pid, section, qtr, vid, df)
-    #raw_material = get_sum_section(pid, 'RAW MATERIAL', qtr, vid, table1_df)
     raw_material = u.get_material_used_from_yield(yields_df, prices_df, pid, 'raw material', vid, qtr)
     raw_material_full = raw_material
     raw_material_half = raw_material
     raw_material_double = raw_material
     
-    #by_product_credits = get_sum_section(pid, 'By Product Credit', qtr, vid, table1_df) * -1.0
     by_product_credits = u.get_material_used_from_yield(yields_df, prices_df, pid, 'by product', vid, qtr) * -1.0
     by_product_credits_full = by_product_credits
     by_product_credits_half = by_product_credits
     by_product_credits_double = by_product_credits
-       
-    utilities = -1
-    #utilities_full = get_sum_section(pid, 'Utilities', qtr, vid, table1_df)
+    
     utilities_full = u.get_material_used_from_yield(yields_df, prices_df, pid, 'utilities', vid, qtr) 
     utilities_half = utilities_full
     utilities_double = utilities_full
@@ -176,7 +171,6 @@ def get_table2(pid, vid, qtr):
 
     variable_cost = raw_material_full + by_product_credits_full +utilities_full + carbon_full
 
-    # 777
     # if capacity = 0 then 0 else 
     # ((Battery Limits*yields[Maintenance Materials]) / (Capacity))  *  Cost Details[Unit Factor] & Cost Summary[Maintenance Materials]
     #yields_maintenance_materials = 0.024
@@ -185,12 +179,10 @@ def get_table2(pid, vid, qtr):
     cost_details_unit_factor_str = 10.0
     
   
-    #cost_details_unit_factor = -1
     #if is_numeric(cost_details_unit_factor_str):
     #    cost_details_unit_factor = np.float32(cost_details_unit_factor_str)
 
-    cmp = ['Maintenance Materials']
-    cost_summary_maintenance_materials_str = get_data_from_cost_single(cmp[0], pid, mid, vid, qtr)
+    cost_summary_maintenance_materials_str = get_data_from_cost_single('Maintenance Materials', pid, mid, vid, qtr)
   
     cost_summary_maintenance_materials = -1    
     if u.is_numeric(cost_summary_maintenance_materials_str):
@@ -199,8 +191,6 @@ def get_table2(pid, vid, qtr):
     #battery_limits_full = battery_limits
     #yields_maintenance_materials
     #yields_maintenance_materials = 0.024 # value to be get from Yield Sheet
-    ####
-
    # maintenance_materials_full = ((battery_limits_full * yields_maintenance_materials)/capsity_full) * cost_details_unit_factor &  cost_summary_maintenance_materials
     #maintenance_materials_full = ((battery_limits_full 
     # * yields_maintenance_materials)/capsity_full) 
@@ -218,14 +208,12 @@ def get_table2(pid, vid, qtr):
     # 2.64
     # Cost details [OS_PCT]?
 
-    cmp = ['Operating Labor', 'Operating Supplies']
-
-    operating_labor_str = get_data_from_cost_single(cmp[0], pid, mid, vid, qtr)
+    operating_labor_str = get_data_from_cost_single('Operating Labor', pid, mid, vid, qtr)
     operating_labor = -1.0
     if u.is_numeric(operating_labor_str):
         operating_labor = np.float32(operating_labor_str)
 
-    cost_summary_operating_supplies_str = get_data_from_cost_single(cmp[1], pid, mid, vid, qtr)
+    cost_summary_operating_supplies_str = get_data_from_cost_single('Operating Supplies', pid, mid, vid, qtr)
     cost_summary_operating_supplies = -1.0
     if u.is_numeric(cost_summary_operating_supplies_str):
         cost_summary_operating_supplies = np.float32(cost_summary_operating_supplies_str)
@@ -246,12 +234,11 @@ def get_table2(pid, vid, qtr):
     operating_labor_half2 = operating_labor_full2 * 2.0
     operating_labor_double2 = operating_labor_full2 * 0.5
 
-    # 777 Maintenance Labor
+    # Maintenance Labor
     # ((Battery Limits * Cost Details[ML_PCT])/Capacity) * Cost Details[Units Factor]
     # to get Cost Details[ML_PCT] = 0.02, 
     #cost_details_ml_pct = 0.016
     cost_details_ml_pct = u.get_consumption_from_yield(yields_df, pid, 'Maintenance Labor')
-    
     cost_summary_maintainence_labor_str = get_data_from_cost_single('Maintenance Labor', pid, mid, vid, qtr)
     cost_summary_maintainence_labor = -1.0
     if u.is_numeric(cost_summary_maintainence_labor_str):
@@ -261,7 +248,7 @@ def get_table2(pid, vid, qtr):
     maintenance_labor_half = ((battery_limits_half * cost_details_ml_pct ) /capsity_half) * cost_details_unit_factor
     maintenance_labor_double = ((battery_limits_double * cost_details_ml_pct ) /capsity_double) * cost_details_unit_factor
 
-    #777 'Control Laboratory'
+    # 'Control Laboratory'
     control_laboratory_str = get_data_from_cost_single('Control Laboratory', pid, mid, vid, qtr)
     control_laboratory = -1.0
     if u.is_numeric(control_laboratory_str):
@@ -271,25 +258,22 @@ def get_table2(pid, vid, qtr):
     control_laboratory_half = control_laboratory_full * 2.0
     control_laboratory_double = control_laboratory_full * 0.5
 
-    # 777 'Total Direct Costs'
+    # 'Total Direct Costs'
     # sum of  operating_labor_full2 + maintenance_labor_full + control_laboratory_full
     total_direct_cost_full =  variable_cost + maintenance_materials_full + operating_supplies_full + operating_labor_full2 + maintenance_labor_full + control_laboratory_full
     total_direct_cost_half =  variable_cost + maintenance_materials_half + operating_supplies_half + operating_labor_half2 + maintenance_labor_half + control_laboratory_half
     total_direct_cost_double = variable_cost + maintenance_materials_double + operating_supplies_double + operating_labor_double2 + maintenance_labor_double + control_laboratory_double
     
-    # , 'Plant Overhead'
-
+    #  'Plant Overhead'
     plant_overhead_str = get_data_from_cost_single('Plant Overhead', pid, mid, vid, qtr)
     plant_overhead = -1.0
     if u.is_numeric(plant_overhead_str):
         plant_overhead = np.float32(plant_overhead_str)
-    
     plant_overhead_full = plant_overhead
+
     #plant_overhead_half = (operating_labor_half2 + maintenance_labor_half + control_laboratory_half)*Lists[oh]
-    # 333
     #list_oh = 0.8
     # the_pct = get_pct_from_lists(6, 'cd_ospct')
-
     list_oh = u.get_pct_from_lists(lists_df, vid, 'cd_ohpct')
     plant_overhead_half = (operating_labor_half2 
                     + maintenance_labor_half + control_laboratory_half)* list_oh
@@ -307,7 +291,6 @@ def get_table2(pid, vid, qtr):
     taxes_and_insurance = -1.0
     if u.is_numeric(taxes_and_insurance_str):
         taxes_and_insurance = np.float32(taxes_and_insurance_str)
-    
     taxes_and_insurance_full = taxes_and_insurance
     taxes_and_insurance_half = (investment_half * cost_details_ti_pct)/capsity_half * cost_details_unit_factor * 100
     taxes_and_insurance_double = (investment_double * cost_details_ti_pct)/capsity_double * cost_details_unit_factor * 100
@@ -486,7 +469,6 @@ def get_table2(pid, vid, qtr):
     processIds = [pid for k in section]
     #locations = [vid for k in section]
     locations = [u.get_location_from_vid(lists_df, vid) for k in section]
-     
     qtrs = [qtr for k in section]
     basis = ['IHSM' for k in section]
     
@@ -517,7 +499,9 @@ for p in pids:
         break
 
 #vids = u.get_all_vids(prices_df)
-vids = [1,2, 3]
+total_vids = [1, 2, 3, 4, 6, 9999]
+vids = [1, 2, 3, 4]
+no_data_in_cost_single_vids = [6, 9999]
 
 periods = u.get_all_periods(prices_df)
 periods = ['Q3-20']
