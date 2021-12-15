@@ -1,11 +1,7 @@
-#util.py
+# util.py
+# This util.py module contains common utility helper functions
 
 import numpy as np
-
-
-"""
-This util.py module contains common utility helper functions
-"""
 
 
 def get_location_from_vid(listsdf, vid):
@@ -25,8 +21,6 @@ def get_location_from_vid(listsdf, vid):
     
     location =  listsdf.iloc[rw-1,0]       
     return location
-
-
 
 
 def get_unit_price(pricedf, mid, vid, period):
@@ -131,19 +125,6 @@ def get_pct_from_lists(listdf, vid, pct_name):
     return pct
 
 
-def get_pct_from_listsOld(lists_df, vid, pct_name):
-
-    """
-    helper function to get values from lists worksheet
-    print(get_pct_from_lists(1, 'cd_clpct'))
-    """
-    pct = 0
-    val = lists_df[(lists_df['Volume']== vid)
-                    ].head()   
-
-    pct = np.float32(val[pct_name][0])
-    return pct
-
 def get_sum_section(pid, section, qtr, vid, df):
 
     """
@@ -163,8 +144,7 @@ def get_sum_section(pid, section, qtr, vid, df):
 
 
 def get_consumption_from_yield(yields_df, pid, material_name):
-    # 888 yield[BLI Scaled Down] 'Battery Limits, Down'
-
+    
     # get row num of material and get col num of pid
     # use df.iloc[rwno, colNo] 
    
@@ -217,10 +197,6 @@ def get_material_used_from_yield(yields_df, prices_df, pid, material_type, vid, 
 
 
     rm = ''
-    
-    rm_unit_price_list = []
-    rm_names = []
-    rm_consumption = []
 
     rm_list = []
 
@@ -303,26 +279,16 @@ def get_product_name_from_yield(yields_df, mid):
 def get_mid_from_yield_pid(yields_df, pid):
 
 
-    # Utilities starts from row 38 and till 47
-    utilities_rownum_starts =   get_row_num_of_components(yields_df, 1, 'Utilities (per unit of capacity)')
-    # Raw Material Starts From row 47 till 468
-    raw_material_rownum_starts = get_row_num_of_components(yields_df, 1, 'Feedstocks (per unit of capacity)')   
-    # By Products starts from row 469
-    by_products_rownum_starts = get_row_num_of_components(yields_df, 1, 'Products (per unit of capacity)')   
-
     colNum = get_column_no_yield(yields_df, pid)
-    #print('colNum ', colNum)
-
     col = yields_df.iloc[:, colNum-1:colNum]
+
     rw = 0
     for v in col.values:
 
         rw+=1
         val = str(v[0])
 
-        # the_product_name
         if is_numeric(val) and np.float32(val) == 1.0 :
-            the_product_name = yields_df.iloc[rw-1,1]
             themid = yields_df.iloc[rw-1,0] 
     return themid
 
