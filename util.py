@@ -125,24 +125,6 @@ def get_pct_from_lists(listdf, vid, pct_name):
     return pct
 
 
-def get_sum_section(pid, section, qtr, vid, df):
-
-    """
-    helper function reads costs for Raw Materials, Utilities and By-Products to 
-    and resturs their respective sum group by section components
-    """
-   
-    sm = 0
-    val = df[   (df['PROCESSID']== pid)
-                        &  (df['PERIOD']== qtr)       
-                        &  (df['LOCATION']== vid)       
-                        &  (df['SECTION']== section)       
-                    ].head()   
-    
-    sm = sum(val['COST(US$/TON)'])
-    return sm
-
-
 def get_consumption_from_yield(yields_df, pid, material_name):
     
     # get row num of material and get col num of pid
