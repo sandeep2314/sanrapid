@@ -1,6 +1,6 @@
 # cost_details_by_process_table1.py
 """
-Aim: Develop a python module to produce the data for the 
+A python module to produce the data for the 
 Cost_Details_by_Process  in RAPID V4 (1)
 
 Table 1: Cost of Raw Material, By-product, and Utilities
